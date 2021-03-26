@@ -1,0 +1,68 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1",
+        "update_url": null
+    },
+    "exported_at": "2021-03-26T15:29:34+00:00",
+    "name": "ROR2",
+    "author": "blackhole@dragon2611.net",
+    "description": "A ROR2 Server",
+    "features": null,
+    "images": [
+        "quay.io\/parkervcp\/pterodactyl-images:debian_wine-5"
+    ],
+    "file_denylist": [],
+    "startup": "xvfb-run -a wine ror2\/\"Risk of Rain 2.exe\"",
+    "config": {
+        "files": "{\r\n    \"ror2\/Risk of Rain 2_Data\/Config\/server.cfg\": {\r\n        \"parser\": \"file\",\r\n        \"find\": {\r\n            \"sv_hostname\": \"sv_hostname \\\"{{env.SERVER_NAME}}\\\";\",\r\n            \"sv_port\": \"sv_port {{server.build.default.port}};\",\r\n            \"steam_server_query_port\": \"steam_server_query_port {{env.steam_port}};\",\r\n            \"sv_maxplayers\": \"sv_maxplayer {{env.MAX_SLOTS}};\",\r\n            \"sv_password\": \"sv_password \\\"{{env.password}}\\\";\"\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"Press Enter to chat\",\r\n    \"userInteraction\": []\r\n}",
+        "logs": "{\r\n    \"custom\": true,\r\n    \"location\": \"logs\/latest.log\"\r\n}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# Server Files \/mnt\/server\/\r\napt update && apt install -y curl\r\napt -y --no-install-recommends --no-install-suggests install curl lib32gcc1 ca-certificates\r\nmkdir -p \/mnt\/server\r\nmkdir -p \/mnt\/server\/ror2 && mkdir -p \/mnt\/server\/steam\r\ncd \/mnt\/server\/steam\r\ncurl -sqL \"https:\/\/steamcdn-a.akamaihd.net\/client\/installer\/steamcmd_linux.tar.gz\" | tar zxvf -\r\ncat << EOF > ror2-update.txt\r\n@ShutdownOnFailedCommand 1 \/\/set to 0 if updating multiple servers at once\r\n@NoPromptForPassword 1\r\nlogin anonymous\r\nforce_install_dir \/mnt\/server\/ror2\/\r\n@sSteamCmdForcePlatformType windows\r\napp_update 1180760\r\nquit%\r\nEOF\r\n.\/steamcmd.sh +runscript ror2-update.txt\r\ncd \/mnt\/server\/ror2\r\ncat << EOF > \"Risk of Rain 2_Data\/Config\/server.cfg\"\r\n\/\/\r\n\/\/ Risk of Rain 2 Dedicated Server custom configuration.\r\n\/\/\r\n\r\nsv_maxplayers 16; \/\/ The maximum number of players.\r\nsteam_server_heartbeat_enabled 1; \/\/ Set to 0 to not advertise to the master server.\r\nsv_hostname \"ROR2 server\"; \/\/ The name that will appear in the server browser.\r\nsv_port 27015; \/\/ The port that the server will bind to. You cannot have multiple server instances with overlapping ports.\r\nsteam_server_query_port 27016;\r\nsteam_server_steam_port 0;\r\nsv_password \"\"; \/\/ The password someone must provide to join this server. Leave empty if none. This is obviously not encrypted so don't use anything sensitive.\r\n\r\necho \"Loaded custom server configuration.\";%\r\nEOF",
+            "container": "debian:buster-slim",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Max Players",
+            "description": "0-16",
+            "env_variable": "MAX_SLOTS",
+            "default_value": "16",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|digits_between:1,16"
+        },
+        {
+            "name": "join password",
+            "description": "",
+            "env_variable": "password",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "max:20"
+        },
+        {
+            "name": "SERVER_NAME",
+            "description": "What we will call our server",
+            "env_variable": "SERVER_NAME",
+            "default_value": "Another ROR2 Server",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:20"
+        },
+        {
+            "name": "Steam Port",
+            "description": "used for steam query",
+            "env_variable": "steam_port",
+            "default_value": "27016",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:20"
+        }
+    ]
+}
